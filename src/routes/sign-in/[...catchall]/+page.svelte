@@ -16,11 +16,11 @@
 
   <div class="sign-in-card">
     <!--
-      Clerk renderiza su UI de login aquí.
-      Configura el aspecto desde el Dashboard de Clerk →
-      Customization → Appearance.
+      path="/sign-in" le dice a Clerk cuál es la ruta base del componente.
+      Esto es necesario para que el routing interno de Clerk (sso-callback,
+      factor-one, factor-two, etc.) funcione correctamente en SvelteKit.
     -->
-    <SignIn />
+    <SignIn path="/sign-in" />
   </div>
 </div>
 

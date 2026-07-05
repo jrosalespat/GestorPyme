@@ -4,7 +4,8 @@ import { redirect } from '@sveltejs/kit';
 
 /**
  * Rutas que NO requieren autenticación (públicas).
- * Todo lo demás será protegido.
+ * /sign-in cubre también /sign-in/sso-callback y cualquier subruta
+ * que Clerk necesite durante el handshake de OAuth.
  */
 const PUBLIC_ROUTES = ['/sign-in', '/sign-up'];
 
