@@ -36,6 +36,7 @@
 	"dependencies": {
 		"@prisma/adapter-pg": "^7.8.0",
 		"@prisma/client": "^7.8.0",
+		"@sveltejs/adapter-node": "^5.5.7",
 		"chart.js": "^4.5.1",
 		"pg": "^8.22.0",
 		"prisma": "^7.8.0",
