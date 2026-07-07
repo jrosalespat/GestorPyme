@@ -61,6 +61,18 @@
     PAGADA:    '💰 Marcar Pagada',
     VENCIDA:   '⏰ Marcar Vencida',
   };
+
+  async function descargarPDF() {
+    const html2pdf = (await import('html2pdf.js')).default;
+    const opciones = {
+      margin: 0.5,
+      filename: `Cotizacion_${cot.folio}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    html2pdf().set(opciones).from(document.getElementById('cotizacion-pdf')).save();
+  }
 </script>
 
 <svelte:head><title>{cot.folio} – GestorPyme</title></svelte:head>
@@ -75,49 +87,63 @@
   <div class="banner-error">{form.error}</div>
 {/if}
 
-<!-- ── Breadcrumb ──────────────────────────── -->
-<div class="breadcrumb">
-  <a href="/cotizaciones" class="bc-link">← Cotizaciones</a>
-  <span class="bc-sep">/</span>
-  <span>{cot.folio}</span>
-</div>
+<!-- ── Breadcrumb & Top Actions ──────────────────────────── -->
+<div class="breadcrumb-container">
+  <div class="breadcrumb">
+    <a href="/cotizaciones" class="bc-link">← Cotizaciones</a>
+    <span class="bc-sep">/</span>
+    <span>{cot.folio}</span>
+  </div>
 
-<!-- ── Header ──────────────────────────────── -->
-<div class="cot-header">
-  <div class="header-left">
-    <div class="folio-row">
-      <h2 class="folio">{cot.folio}</h2>
-      <span class="badge"
-        style="color:{cfg.color}; background:{cfg.bg}; border-color:{cfg.border}">
-        {cfg.label}
-      </span>
+  <div class="top-actions">
+    <!-- Botón Descargar PDF -->
+    <button class="btn-secondary flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 px-3.5 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-sm" onclick={descargarPDF}>
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" class="btn-icon">
+        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+      </svg>
+      Descargar PDF
+    </button>
+
+    <!-- Botones de transición de estado -->
+    <div class="header-actions">
+      {#each transiciones as t}
+        <form method="POST" action="?/cambiarEstado" use:enhance>
+          <input type="hidden" name="nuevoEstado" value={t} />
+          <button type="submit" class="btn-trans" class:btn-danger={t === 'RECHAZADA'}>
+            {TRANS_LABELS[t] ?? t}
+          </button>
+        </form>
+      {/each}
+
+      {#if cot.estado === 'ACEPTADA' || cot.estado === 'PAGADA'}
+        <button class="btn-primary" onclick={() => showPago = true}>💳 Registrar pago</button>
+      {/if}
     </div>
-    <p class="cliente-info">
-      <a href="/clientes/{cot.cliente.id}" class="cliente-link">{cot.cliente.nombre}</a>
-      {#if cot.cliente.empresa} · {cot.cliente.empresa}{/if}
-    </p>
-    <p class="fechas">
-      Emitida: {fmt(cot.fechaEmision)}
-      {#if cot.fechaVence} · Vence: <span class:text-warn={pendiente > 0 && new Date(cot.fechaVence) < new Date()}>{fmt(cot.fechaVence)}</span>{/if}
-    </p>
-  </div>
-
-  <!-- Botones de transición de estado -->
-  <div class="header-actions">
-    {#each transiciones as t}
-      <form method="POST" action="?/cambiarEstado" use:enhance>
-        <input type="hidden" name="nuevoEstado" value={t} />
-        <button type="submit" class="btn-trans" class:btn-danger={t === 'RECHAZADA'}>
-          {TRANS_LABELS[t] ?? t}
-        </button>
-      </form>
-    {/each}
-
-    {#if cot.estado === 'ACEPTADA' || cot.estado === 'PAGADA'}
-      <button class="btn-primary" onclick={() => showPago = true}>💳 Registrar pago</button>
-    {/if}
   </div>
 </div>
+
+<div id="cotizacion-pdf">
+  <!-- ── Header ──────────────────────────────── -->
+  <div class="cot-header">
+    <div class="header-left">
+      <div class="folio-row">
+        <h2 class="folio">{cot.folio}</h2>
+        <span class="badge"
+          style="color:{cfg.color}; background:{cfg.bg}; border-color:{cfg.border}">
+          {cfg.label}
+        </span>
+      </div>
+      <p class="cliente-info">
+        <a href="/clientes/{cot.cliente.id}" class="cliente-link">{cot.cliente.nombre}</a>
+        {#if cot.cliente.empresa} · {cot.cliente.empresa}{/if}
+      </p>
+      <p class="fechas">
+        Emitida: {fmt(cot.fechaEmision)}
+        {#if cot.fechaVence} · Vence: <span class:text-warn={pendiente > 0 && new Date(cot.fechaVence) < new Date()}>{fmt(cot.fechaVence)}</span>{/if}
+      </p>
+    </div>
+  </div>
 
 <!-- ── KPIs de montos ───────────────────────── -->
 <div class="kpis">
@@ -288,6 +314,7 @@
     {/if}
   </div>
 {/if}
+</div>
 
 <!-- ═══════════════════════════════════════════
      MODAL — Registrar pago
@@ -521,4 +548,45 @@ select option { background: #1a1d27; }
 .confirm-text { font-size: 0.875rem; color: #d4d4e8; line-height: 1.6; margin-bottom: 16px; }
 .btn-danger-solid { background: #dc2626; color: #fff; border: none; border-radius: 8px; padding: 9px 16px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background .2s; }
 .btn-danger-solid:hover { background: #ef4444; }
+
+/* ── Top row actions and breadcrumb layout ── */
+.breadcrumb-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 16px;
+}
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f0f0f5;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+.btn-icon {
+  flex-shrink: 0;
+}
 </style>
