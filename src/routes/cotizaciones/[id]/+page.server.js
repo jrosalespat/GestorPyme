@@ -2,6 +2,7 @@ import { prisma } from '$lib/server/prisma.js';
 import { fail, error, redirect } from '@sveltejs/kit';
 import { TRANSICIONES } from '$lib/schemas/cotizacion.js';
 import { pagoSchema } from '$lib/schemas/cotizacion.js';
+import { sendEmail } from '$lib/server/resend.js';
 
 // ── LOAD ───────────────────────────────────────────────────────────────────
 /** @type {import('./$types').PageServerLoad} */
@@ -54,7 +55,10 @@ export const actions = {
 
     if (!nuevoEstado) return fail(400, { error: 'Estado requerido' });
 
-    const cot = await prisma.cotizacion.findUnique({ where: { id: params.id } });
+    const cot = await prisma.cotizacion.findUnique({
+      where: { id: params.id },
+      include: { cliente: true }
+    });
     if (!cot) return fail(404, { error: 'Cotización no encontrada' });
 
     // Validar transición permitida
@@ -83,10 +87,65 @@ export const actions = {
       })
     ]);
 
-    // Placeholder email si pasa a ENVIADA
-    if (nuevoEstado === 'ENVIADA') {
-      console.log(`[Resend] Reenviar cotización ${cot.folio} al cliente (estado: ENVIADA)`);
-      // TODO: await enviarCotizacion(cot.id);
+    // Enviar email si pasa a ENVIADA
+    if (nuevoEstado === 'ENVIADA' && cot.cliente?.email) {
+      const formattedTotal = new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: cot.moneda || 'MXN'
+      }).format(Number(cot.total));
+
+      const formattedFecha = cot.fechaVence ? new Date(cot.fechaVence).toLocaleDateString('es-MX', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }) : 'No especificada';
+
+      const emailHtml = `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #e5e7eb; border-radius: 12px; background-color: #ffffff; color: #1f2937; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+          <div style="border-bottom: 2px solid #3b82f6; padding-bottom: 20px; margin-bottom: 25px;">
+            <h1 style="color: #1e3a8a; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.05em;">GestorPyme</h1>
+            <p style="color: #6b7280; margin: 5px 0 0 0; font-size: 14px;">Cotización de servicios / productos</p>
+          </div>
+          
+          <h2 style="color: #1f2937; font-size: 20px; margin-top: 0; font-weight: 600;">Estimado/a ${cot.cliente.nombre},</h2>
+          
+          <p style="font-size: 16px; line-height: 1.6; color: #4b5563; margin-bottom: 20px;">
+            Es un placer saludarle. Le compartimos los detalles de la cotización <strong>${cot.folio}</strong> que hemos preparado para usted.
+          </p>
+          
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 6px 0; color: #64748b; font-size: 14px; font-weight: 500;">Folio:</td>
+                <td style="padding: 6px 0; color: #0f172a; font-size: 14px; font-weight: 600; text-align: right;">${cot.folio}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #64748b; font-size: 14px; font-weight: 500;">Total:</td>
+                <td style="padding: 6px 0; color: #10b981; font-size: 16px; font-weight: 700; text-align: right;">${formattedTotal}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #64748b; font-size: 14px; font-weight: 500;">Vencimiento:</td>
+                <td style="padding: 6px 0; color: #dfc218; font-size: 14px; font-weight: 600; text-align: right;">${formattedFecha}</td>
+              </tr>
+            </table>
+          </div>
+          
+          <p style="font-size: 15px; line-height: 1.6; color: #4b5563;">
+            Para revisar el detalle completo, aceptar o rechazar esta cotización, por favor ingrese a nuestro portal o responda directamente a este correo si tiene alguna duda o comentario.
+          </p>
+          
+          <div style="margin-top: 35px; border-top: 1px solid #e5e7eb; padding-top: 20px; text-align: center; color: #9ca3af; font-size: 12px;">
+            <p style="margin: 0;">Este es un correo automático enviado por <strong>GestorPyme</strong>.</p>
+            <p style="margin: 5px 0 0 0;">© ${new Date().getFullYear()} GestorPyme. Todos los derechos reservados.</p>
+          </div>
+        </div>
+      `;
+
+      await sendEmail({
+        to: cot.cliente.email,
+        subject: `Nueva Cotización ${cot.folio} - GestorPyme`,
+        html: emailHtml
+      });
     }
 
     return { success: true, flash: `Estado actualizado a ${nuevoEstado}` };
