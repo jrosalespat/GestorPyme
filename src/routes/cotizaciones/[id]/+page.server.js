@@ -57,7 +57,7 @@ export const actions = {
 
     const cot = await prisma.cotizacion.findUnique({
       where: { id: params.id },
-      include: { cliente: true }
+      include: { cliente: true, conceptos: true }
     });
     if (!cot) return fail(404, { error: 'Cotización no encontrada' });
 
@@ -100,6 +100,19 @@ export const actions = {
         day: 'numeric'
       }) : 'No especificada';
 
+      const formatCurrency = (val) => new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: cot.moneda || 'MXN'
+      }).format(Number(val));
+
+      const conceptsHtmlRows = cot.conceptos.map(c => `
+        <tr style="border-bottom: 1px solid #e5e7eb;">
+          <td style="padding: 8px; text-align: left; font-size: 14px; color: #374151;">${c.descripcion}</td>
+          <td style="padding: 8px; text-align: left; font-size: 14px; color: #374151;">${c.cantidad}</td>
+          <td style="padding: 8px; text-align: left; font-size: 14px; color: #374151;">${formatCurrency(c.subtotal)}</td>
+        </tr>
+      `).join('');
+
       const emailHtml = `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #e5e7eb; border-radius: 12px; background-color: #ffffff; color: #1f2937; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
           <div style="border-bottom: 2px solid #3b82f6; padding-bottom: 20px; margin-bottom: 25px;">
@@ -129,9 +142,23 @@ export const actions = {
               </tr>
             </table>
           </div>
+
+          <h3 style="color: #1e3a8a; font-size: 16px; font-weight: 600; margin-top: 25px; margin-bottom: 10px;">Detalle de la Cotización</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+            <thead>
+              <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                <th style="padding: 8px; text-align: left; font-size: 12px; font-weight: bold; text-transform: uppercase; color: #475569;">Concepto/Descripción</th>
+                <th style="padding: 8px; text-align: left; font-size: 12px; font-weight: bold; text-transform: uppercase; color: #475569; width: 80px;">Cantidad</th>
+                <th style="padding: 8px; text-align: left; font-size: 12px; font-weight: bold; text-transform: uppercase; color: #475569; width: 130px;">Subtotal/Importe</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${conceptsHtmlRows}
+            </tbody>
+          </table>
           
           <p style="font-size: 15px; line-height: 1.6; color: #4b5563;">
-            Para revisar el detalle completo, aceptar o rechazar esta cotización, por favor ingrese a nuestro portal o responda directamente a este correo si tiene alguna duda o comentario.
+            Para revisar el detalle completo, aceptar o rechazar esta cotización, por favor ingrese a nuestro portal. Si tiene alguna duda o requiere modificaciones, por favor contáctenos a través de nuestros canales oficiales.
           </p>
           
           <div style="margin-top: 35px; border-top: 1px solid #e5e7eb; padding-top: 20px; text-align: center; color: #9ca3af; font-size: 12px;">
