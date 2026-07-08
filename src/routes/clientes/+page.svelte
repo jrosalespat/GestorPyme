@@ -123,7 +123,6 @@
       <p>{busqueda ? 'Sin resultados para esa búsqueda.' : 'Aún no hay clientes. ¡Crea el primero!'}</p>
     </div>
   {:else}
-    <div class="w-full overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
       <table class="clientes-table">
         <thead>
           <tr>
@@ -154,7 +153,6 @@
           {/each}
         </tbody>
       </table>
-    </div>
 
     <!-- ── Paginación ──────────────────────── -->
     {#if totalPaginas > 1}
@@ -374,7 +372,8 @@
   background: #1a1d27;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,.08);
-  overflow: hidden;
+  overflow-x: auto;
+  max-width: 100%;
 }
 .clientes-table {
   width: 100%;

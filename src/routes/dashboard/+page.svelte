@@ -233,7 +233,8 @@
       {#if ultimasCotizaciones.length === 0}
         <p class="no-data-txt">Aún no hay cotizaciones.</p>
       {:else}
-        <table class="mini-table">
+        <div class="table-wrap">
+          <table class="mini-table">
           <thead>
             <tr>
               <th>Folio</th>
@@ -261,6 +262,7 @@
             {/each}
           </tbody>
         </table>
+        </div>
       {/if}
     </div>
 
@@ -273,7 +275,8 @@
       {#if topClientes.length === 0}
         <p class="no-data-txt">Sin cartera pendiente. 🎉</p>
       {:else}
-        <div class="top-clientes">
+        <div class="table-wrap">
+          <div class="top-clientes">
           {#each topClientes as c, i}
             <div class="top-item">
               <div class="top-rank">#{i + 1}</div>
@@ -284,6 +287,7 @@
               <div class="top-pendiente">{mxn(c.pendiente)}</div>
             </div>
           {/each}
+          </div>
         </div>
       {/if}
     </div>
@@ -372,11 +376,20 @@
 .tables-row { display: grid; grid-template-columns: 1fr 320px; gap: 14px; }
 @media (max-width: 900px) { .tables-row { grid-template-columns: 1fr; } }
 
+.table-wrap {
+  overflow-x: auto;
+  max-width: 100%;
+}
 .table-card {
   background: #1a1d27;
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 14px;
-  padding: 20px;
+  padding: 12px;
+}
+@media (min-width: 768px) {
+  .table-card {
+    padding: 20px;
+  }
 }
 .table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .table-title  { font-size: 0.875rem; font-weight: 700; color: #f0f0f5; }

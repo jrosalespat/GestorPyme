@@ -40,9 +40,10 @@ html, body {
 
 /* ---------- App shell ---------- */
 .app-shell {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  display: grid;
+  grid-template-columns: var(--sidebar-w-collapsed) 1fr;
+  height: 100vh;
+  overflow: hidden;
 }
 
 @media (min-width: 768px) {
@@ -66,12 +67,12 @@ html, body {
   height: 100vh;
   overflow: hidden;
   z-index: 100;
+  position: sticky;
+  top: 0;
 }
 
 @media (min-width: 768px) {
   .sidebar {
-    position: sticky;
-    top: 0;
     transition: width var(--transition);
   }
 }
@@ -182,7 +183,7 @@ html, body {
 .main-wrapper {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
   overflow: hidden;
 }
 
@@ -241,9 +242,17 @@ html, body {
 /* ---------- Content ---------- */
 .app-content {
   flex: 1;
-  padding: 28px;
+  padding: 16px;
   background: var(--bg-base);
   overflow-y: auto;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+@media (min-width: 768px) {
+  .app-content {
+    padding: 28px;
+  }
 }
 
 /* ---------- Sign-in page wrapper ---------- */

@@ -99,7 +99,6 @@
       <p>{filtroEstado || filtroCliente ? 'Sin resultados para ese filtro.' : 'Aún no hay cotizaciones.'}</p>
     </div>
   {:else}
-    <div class="w-full overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
       <table class="cot-table">
         <thead>
           <tr>
@@ -145,7 +144,6 @@
           {/each}
         </tbody>
       </table>
-    </div>
   {/if}
 </div>
 
@@ -194,7 +192,7 @@
 .count-badge { font-size: 0.75rem; color: #8b8fa8; white-space: nowrap; }
 
 /* ── Table ─────────────── */
-.table-wrap { background: #1a1d27; border-radius: 12px; border: 1px solid rgba(255,255,255,.08); overflow: hidden; }
+.table-wrap { background: #1a1d27; border-radius: 12px; border: 1px solid rgba(255,255,255,.08); overflow-x: auto; max-width: 100%; }
 .cot-table  { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
 .cot-table thead tr { background: rgba(255,255,255,.03); border-bottom: 1px solid rgba(255,255,255,.08); }
 .cot-table th { text-align: left; padding: 12px 14px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #8b8fa8; }

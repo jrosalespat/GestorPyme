@@ -175,7 +175,6 @@
 <div class="section">
   <h3 class="section-title">Conceptos</h3>
   <div class="table-wrap">
-    <div class="w-full overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
       <table class="detail-table">
       <thead>
         <tr>
@@ -202,7 +201,6 @@
         {/each}
       </tbody>
     </table>
-    </div>
   </div>
 </div>
 
@@ -223,7 +221,6 @@
     <div class="empty-card">Sin pagos registrados.</div>
   {:else}
     <div class="table-wrap">
-      <div class="w-full overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
         <table class="detail-table">
         <thead>
           <tr>
@@ -256,7 +253,6 @@
           {/each}
         </tbody>
       </table>
-      </div>
     </div>
 
     <!-- Resumen de pagos -->
@@ -467,7 +463,7 @@
 .section-title { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #8b8fa8; margin-bottom: 10px; }
 
 /* ── Tables ──────────────────── */
-.table-wrap { background: #1a1d27; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; overflow: hidden; }
+.table-wrap { background: #1a1d27; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; overflow-x: auto; max-width: 100%; }
 .detail-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
 .detail-table thead tr { background: rgba(255,255,255,.03); border-bottom: 1px solid rgba(255,255,255,.08); }
 .detail-table th { text-align: left; padding: 10px 14px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #8b8fa8; }

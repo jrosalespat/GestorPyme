@@ -103,7 +103,6 @@
   </div>
 {:else}
   <div class="table-wrap">
-    <div class="w-full overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
       <table class="cartera-table">
       <thead>
         <tr>
@@ -174,7 +173,6 @@
         {/each}
       </tbody>
     </table>
-    </div>
   </div>
 {/if}
 
@@ -205,7 +203,7 @@
 .resumen-chip.ok      .chip-num { color: #34d399; }
 
 /* ── Table ───────────────────── */
-.table-wrap { background: #1a1d27; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; overflow: hidden; }
+.table-wrap { background: #1a1d27; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; overflow-x: auto; max-width: 100%; }
 .cartera-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 .cartera-table thead tr { background: rgba(255,255,255,.03); border-bottom: 1px solid rgba(255,255,255,.08); }
 .cartera-table th { text-align: left; padding: 11px 14px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #8b8fa8; }

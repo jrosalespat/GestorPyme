@@ -165,7 +165,6 @@
     </div>
   {:else}
     <div class="table-wrap">
-    <div class="w-full overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
       <table class="cot-table">
         <thead>
           <tr>
@@ -198,7 +197,6 @@
           {/each}
         </tbody>
       </table>
-    </div>
     </div>
   {/if}
 </div>
@@ -330,7 +328,8 @@ dd { color: #d4d4e8; }
   background: #1a1d27;
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
+  max-width: 100%;
 }
 .cot-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
 .cot-table thead tr {
