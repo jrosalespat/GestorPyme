@@ -40,14 +40,21 @@ html, body {
 
 /* ---------- App shell ---------- */
 .app-shell {
-  display: grid;
-  grid-template-columns: var(--sidebar-w) 1fr;
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  transition: grid-template-columns var(--transition);
 }
 
-.app-shell.sidebar-collapsed {
-  grid-template-columns: var(--sidebar-w-collapsed) 1fr;
+@media (min-width: 768px) {
+  .app-shell {
+    display: grid;
+    grid-template-columns: var(--sidebar-w) 1fr;
+    transition: grid-template-columns var(--transition);
+  }
+
+  .app-shell.sidebar-collapsed {
+    grid-template-columns: var(--sidebar-w-collapsed) 1fr;
+  }
 }
 
 /* ---------- Sidebar ---------- */
@@ -56,12 +63,17 @@ html, body {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  position: sticky;
-  top: 0;
   height: 100vh;
   overflow: hidden;
-  transition: width var(--transition);
   z-index: 100;
+}
+
+@media (min-width: 768px) {
+  .sidebar {
+    position: sticky;
+    top: 0;
+    transition: width var(--transition);
+  }
 }
 
 .sidebar-brand {
@@ -248,3 +260,56 @@ html, body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+/* ---------- Mobile Shell & Menu Buttons ---------- */
+.mobile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+}
+@media (min-width: 768px) {
+  .mobile-header {
+    display: none;
+  }
+}
+
+.mobile-menu-btn {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-secondary);
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition), color var(--transition);
+  box-shadow: none;
+}
+.mobile-menu-btn:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.mobile-close-btn {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-secondary);
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition), color var(--transition);
+  box-shadow: none;
+}
+.mobile-close-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+}

@@ -103,7 +103,8 @@
   </div>
 {:else}
   <div class="table-wrap">
-    <table class="cartera-table">
+    <div class="w-full overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
+      <table class="cartera-table">
       <thead>
         <tr>
           <th>Cliente</th>
@@ -173,6 +174,7 @@
         {/each}
       </tbody>
     </table>
+    </div>
   </div>
 {/if}
 

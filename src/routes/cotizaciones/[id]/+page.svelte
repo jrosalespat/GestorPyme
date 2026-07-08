@@ -175,7 +175,8 @@
 <div class="section">
   <h3 class="section-title">Conceptos</h3>
   <div class="table-wrap">
-    <table class="detail-table">
+    <div class="w-full overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
+      <table class="detail-table">
       <thead>
         <tr>
           <th>#</th>
@@ -201,6 +202,7 @@
         {/each}
       </tbody>
     </table>
+    </div>
   </div>
 </div>
 
@@ -221,7 +223,8 @@
     <div class="empty-card">Sin pagos registrados.</div>
   {:else}
     <div class="table-wrap">
-      <table class="detail-table">
+      <div class="w-full overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
+        <table class="detail-table">
         <thead>
           <tr>
             <th>Fecha</th>
@@ -253,6 +256,7 @@
           {/each}
         </tbody>
       </table>
+      </div>
     </div>
 
     <!-- Resumen de pagos -->

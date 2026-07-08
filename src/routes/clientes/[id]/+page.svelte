@@ -165,6 +165,7 @@
     </div>
   {:else}
     <div class="table-wrap">
+    <div class="w-full overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
       <table class="cot-table">
         <thead>
           <tr>
@@ -197,6 +198,7 @@
           {/each}
         </tbody>
       </table>
+    </div>
     </div>
   {/if}
 </div>

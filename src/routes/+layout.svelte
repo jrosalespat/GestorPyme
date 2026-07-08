@@ -26,6 +26,13 @@
   let pageTitle = $derived(
     navItems.find(n => $page.url.pathname.startsWith(n.href))?.label ?? 'GestorPyme'
   );
+  let mobileSidebarOpen = $state(false);
+
+  $effect(() => {
+    // Cerrar sidebar al cambiar de ruta
+    const path = $page.url.pathname;
+    mobileSidebarOpen = false;
+  });
 </script>
 
 <svelte:head>
@@ -45,15 +52,44 @@
 
   {:else}
     <!-- Shell protegido: handleClerk en hooks.server.js redirige a /sign-in si no hay sesión -->
+    <!-- Barra superior (Header móvil) visible solo en pantallas pequeñas (md:hidden) -->
+    <div class="mobile-header">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">⚡</span>
+        <span class="text-lg font-bold bg-gradient-to-r from-[#6c63ff] to-[#a78bfa] bg-clip-text text-transparent">GestorPyme</span>
+      </div>
+      <button class="mobile-menu-btn" onclick={() => mobileSidebarOpen = true} aria-label="Abrir menú">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+          <line x1="4" x2="20" y1="12" y2="12" />
+          <line x1="4" x2="20" y1="6" y2="6" />
+          <line x1="4" x2="20" y1="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+
     <div class="app-shell" class:sidebar-collapsed={!sidebarOpen}>
 
+      <!-- Backdrop en móvil -->
+      {#if mobileSidebarOpen}
+        <div class="fixed inset-0 z-40 bg-black/60 md:hidden" role="presentation" onclick={() => mobileSidebarOpen = false}></div>
+      {/if}
+
       <!-- ===================== SIDEBAR ===================== -->
-      <aside class="sidebar">
-        <div class="sidebar-brand">
-          <span class="brand-icon">⚡</span>
-          {#if sidebarOpen}
-            <span class="brand-name">GestorPyme</span>
-          {/if}
+      <aside class="sidebar fixed inset-y-0 left-0 z-50 w-[240px] transition-transform duration-300 ease-in-out md:translate-x-0 md:relative md:flex md:flex-col md:h-screen {mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'} {!sidebarOpen ? 'md:w-[64px]' : 'md:w-[240px]'}" style="background: var(--bg-surface); border-right: 1px solid var(--border); display: flex; flex-direction: column;">
+        <div class="sidebar-brand flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.08)] min-h-[64px] md:py-5 md:px-4">
+          <div class="flex items-center gap-2">
+            <span class="brand-icon">⚡</span>
+            {#if sidebarOpen || mobileSidebarOpen}
+              <span class="brand-name">GestorPyme</span>
+            {/if}
+          </div>
+          <!-- Botón de cerrar solo móvil -->
+          <button class="mobile-close-btn md:hidden" onclick={() => mobileSidebarOpen = false} aria-label="Cerrar menú">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
         </div>
 
         <nav class="sidebar-nav">
@@ -65,7 +101,7 @@
               title={item.label}
             >
               <span class="nav-icon">{item.icon}</span>
-              {#if sidebarOpen}
+              {#if sidebarOpen || mobileSidebarOpen}
                 <span class="nav-label">{item.label}</span>
               {/if}
             </a>

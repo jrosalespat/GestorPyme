@@ -99,51 +99,53 @@
       <p>{filtroEstado || filtroCliente ? 'Sin resultados para ese filtro.' : 'Aún no hay cotizaciones.'}</p>
     </div>
   {:else}
-    <table class="cot-table">
-      <thead>
-        <tr>
-          <th>Folio</th>
-          <th>Cliente</th>
-          <th>Estado</th>
-          <th>Emisión</th>
-          <th>Vence</th>
-          <th>Total</th>
-          <th>Cobrado</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each filtradas as c (c.id)}
-          {@const cfg = badge(c.estado)}
+    <div class="w-full overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
+      <table class="cot-table">
+        <thead>
           <tr>
-            <td>
-              <a href="/cotizaciones/{c.id}" class="folio-link">{c.folio}</a>
-            </td>
-            <td>
-              <span class="cliente-nombre">{c.cliente.nombre}</span>
-              {#if c.cliente.empresa}
-                <span class="cliente-sub">{c.cliente.empresa}</span>
-              {/if}
-            </td>
-            <td>
-              <span class="badge"
-                style="color:{cfg.color}; background:{cfg.bg}; border-color:{cfg.border}">
-                {cfg.label}
-              </span>
-            </td>
-            <td>{fmt(c.fechaEmision)}</td>
-            <td class:vencido={c.estado !== 'PAGADA' && c.fechaVence && new Date(c.fechaVence) < new Date()}>
-              {fmt(c.fechaVence)}
-            </td>
-            <td class="mono">{mxn(c.total)}</td>
-            <td class="mono cobrado-cell">{mxn(c.cobrado)}</td>
-            <td>
-              <a href="/cotizaciones/{c.id}" class="btn-icon" title="Ver detalle">👁</a>
-            </td>
+            <th>Folio</th>
+            <th>Cliente</th>
+            <th>Estado</th>
+            <th>Emisión</th>
+            <th>Vence</th>
+            <th>Total</th>
+            <th>Cobrado</th>
+            <th></th>
           </tr>
-        {/each}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {#each filtradas as c (c.id)}
+            {@const cfg = badge(c.estado)}
+            <tr>
+              <td>
+                <a href="/cotizaciones/{c.id}" class="folio-link">{c.folio}</a>
+              </td>
+              <td>
+                <span class="cliente-nombre">{c.cliente.nombre}</span>
+                {#if c.cliente.empresa}
+                  <span class="cliente-sub">{c.cliente.empresa}</span>
+                {/if}
+              </td>
+              <td>
+                <span class="badge"
+                  style="color:{cfg.color}; background:{cfg.bg}; border-color:{cfg.border}">
+                  {cfg.label}
+                </span>
+              </td>
+              <td>{fmt(c.fechaEmision)}</td>
+              <td class:vencido={c.estado !== 'PAGADA' && c.fechaVence && new Date(c.fechaVence) < new Date()}>
+                {fmt(c.fechaVence)}
+              </td>
+              <td class="mono">{mxn(c.total)}</td>
+              <td class="mono cobrado-cell">{mxn(c.cobrado)}</td>
+              <td>
+                <a href="/cotizaciones/{c.id}" class="btn-icon" title="Ver detalle">👁</a>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
   {/if}
 </div>
 

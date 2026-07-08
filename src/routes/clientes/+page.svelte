@@ -123,36 +123,38 @@
       <p>{busqueda ? 'Sin resultados para esa búsqueda.' : 'Aún no hay clientes. ¡Crea el primero!'}</p>
     </div>
   {:else}
-    <table class="clientes-table">
-      <thead>
-        <tr>
-          <th>Nombre / Empresa</th>
-          <th>RFC</th>
-          <th>Correo</th>
-          <th>Teléfono</th>
-          <th>Alta</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each clientesPagina as c (c.id)}
+    <div class="w-full overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
+      <table class="clientes-table">
+        <thead>
           <tr>
-            <td>
-              <a href="/clientes/{c.id}" class="cliente-link">{c.nombre}</a>
-              {#if c.empresa}<span class="empresa-sub">{c.empresa}</span>{/if}
-            </td>
-            <td class="mono">{c.rfc ?? '—'}</td>
-            <td>{c.email}</td>
-            <td>{c.telefono ?? '—'}</td>
-            <td>{fmt(c.createdAt)}</td>
-            <td class="actions-cell">
-              <a href="/clientes/{c.id}" class="btn-icon" title="Ver perfil">👁</a>
-              <button class="btn-icon" title="Editar" onclick={() => abrirEditar(c)}>✏️</button>
-            </td>
+            <th>Nombre / Empresa</th>
+            <th>RFC</th>
+            <th>Correo</th>
+            <th>Teléfono</th>
+            <th>Alta</th>
+            <th>Acciones</th>
           </tr>
-        {/each}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {#each clientesPagina as c (c.id)}
+            <tr>
+              <td>
+                <a href="/clientes/{c.id}" class="cliente-link">{c.nombre}</a>
+                {#if c.empresa}<span class="empresa-sub">{c.empresa}</span>{/if}
+              </td>
+              <td class="mono">{c.rfc ?? '—'}</td>
+              <td>{c.email}</td>
+              <td>{c.telefono ?? '—'}</td>
+              <td>{fmt(c.createdAt)}</td>
+              <td class="actions-cell">
+                <a href="/clientes/{c.id}" class="btn-icon" title="Ver perfil">👁</a>
+                <button class="btn-icon" title="Editar" onclick={() => abrirEditar(c)}>✏️</button>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
 
     <!-- ── Paginación ──────────────────────── -->
     {#if totalPaginas > 1}
