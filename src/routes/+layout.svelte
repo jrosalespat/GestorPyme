@@ -3,6 +3,7 @@
   import { page } from '$app/stores';
   import { ClerkProvider, ClerkLoaded, UserButton } from 'svelte-clerk';
   import { PUBLIC_CLERK_PUBLISHABLE_KEY } from '$env/static/public';
+  import FloatingAssistant from '$lib/components/FloatingAssistant.svelte';
 
   let { children, data } = $props();
 
@@ -134,6 +135,9 @@
         </main>
       </div>
     </div>
+
+    <!-- Asistente de IA Flotante -->
+    <FloatingAssistant user={data?.user} />
   {/if}
 
 </ClerkProvider>
