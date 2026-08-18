@@ -62,16 +62,33 @@
     VENCIDA:   '⏰ Marcar Vencida',
   };
 
+  let isPdfMode = $state(false);
+
   async function descargarPDF() {
     const html2pdf = (await import('html2pdf.js')).default;
+    const element = document.getElementById('cotizacion-pdf');
+    if (!element) return;
+
+    isPdfMode = true;
+
     const opciones = {
-      margin: 0.5,
+      margin: 0.4,
       filename: `Cotizacion_${cot.folio}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
+      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
       jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
     };
-    html2pdf().set(opciones).from(document.getElementById('cotizacion-pdf')).save();
+
+    // Damos un pequeño respiro para que el DOM aplique las clases de estilo antes de la captura
+    await new Promise(resolve => setTimeout(resolve, 150));
+
+    try {
+      await html2pdf().set(opciones).from(element).save();
+    } catch (error) {
+      console.error('Error al generar PDF:', error);
+    } finally {
+      isPdfMode = false;
+    }
   }
 </script>
 
@@ -123,13 +140,13 @@
   </div>
 </div>
 
-<div id="cotizacion-pdf">
+<div id="cotizacion-pdf" class:pdf-mode={isPdfMode}>
   <!-- ── Header ──────────────────────────────── -->
   <div class="cot-header">
     <div class="header-left">
       <div class="folio-row">
         <h2 class="folio">{cot.folio}</h2>
-        <span class="badge"
+        <span class="badge badge-{cot.estado}"
           style="color:{cfg.color}; background:{cfg.bg}; border-color:{cfg.border}">
           {cfg.label}
         </span>
@@ -205,7 +222,7 @@
 </div>
 
 <!-- ── Pagos ─────────────────────────────────── -->
-<div class="section">
+<div class="section section-pagos" class:hidden-pdf={cot.pagos.length === 0}>
   <div class="section-header">
     <h3 class="section-title">Pagos ({cot.pagos.length})</h3>
     {#if cot.estado === 'ACEPTADA' || cot.estado === 'ENVIADA'}
@@ -274,7 +291,7 @@
 </div>
 
 <!-- ── Historial de estados ─────────────────── -->
-<div class="section">
+<div class="section section-historial">
   <h3 class="section-title">Historial de estados</h3>
   <div class="historial">
     {#each cot.historial as h}
@@ -588,5 +605,199 @@ select option { background: #1a1d27; }
 }
 .btn-icon {
   flex-shrink: 0;
+}
+
+/* ── PDF Export Overrides ────────────────── */
+:global(#cotizacion-pdf.pdf-mode) {
+  background: #ffffff !important;
+  color: #1e293b !important;
+  padding: 24px !important;
+  border-radius: 0 !important;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+  min-height: auto !important;
+}
+
+/* Ocultar controles interactivos e historial interno */
+:global(#cotizacion-pdf.pdf-mode button),
+:global(#cotizacion-pdf.pdf-mode .btn-primary),
+:global(#cotizacion-pdf.pdf-mode .btn-del),
+:global(#cotizacion-pdf.pdf-mode form),
+:global(#cotizacion-pdf.pdf-mode .section-historial) {
+  display: none !important;
+}
+
+:global(#cotizacion-pdf.pdf-mode .hidden-pdf) {
+  display: none !important;
+}
+
+/* Estilo del Header */
+:global(#cotizacion-pdf.pdf-mode .cot-header) {
+  border-bottom: 2px solid #e2e8f0 !important;
+  padding-bottom: 18px !important;
+  margin-bottom: 24px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+}
+:global(#cotizacion-pdf.pdf-mode .folio) {
+  color: #0f172a !important;
+  font-size: 1.85rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+}
+:global(#cotizacion-pdf.pdf-mode .cliente-info) {
+  font-size: 0.95rem !important;
+  color: #334155 !important;
+  margin-top: 6px !important;
+  margin-bottom: 4px !important;
+}
+:global(#cotizacion-pdf.pdf-mode .cliente-link) {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  pointer-events: none !important;
+}
+:global(#cotizacion-pdf.pdf-mode .fechas) {
+  font-size: 0.8rem !important;
+  color: #64748b !important;
+}
+
+/* Colores de badges con alto contraste */
+:global(#cotizacion-pdf.pdf-mode .badge-BORRADOR) { color: #475569 !important; background: #f1f5f9 !important; border-color: #cbd5e1 !important; }
+:global(#cotizacion-pdf.pdf-mode .badge-ENVIADA)  { color: #b45309 !important; background: #fef3c7 !important; border-color: #fde68a !important; }
+:global(#cotizacion-pdf.pdf-mode .badge-ACEPTADA) { color: #047857 !important; background: #d1fae5 !important; border-color: #a7f3d0 !important; }
+:global(#cotizacion-pdf.pdf-mode .badge-RECHAZADA) { color: #b91c1c !important; background: #fee2e2 !important; border-color: #fca5a5 !important; }
+:global(#cotizacion-pdf.pdf-mode .badge-VENCIDA)  { color: #c2410c !important; background: #ffedd5 !important; border-color: #fed7aa !important; }
+:global(#cotizacion-pdf.pdf-mode .badge-PAGADA)   { color: #0f766e !important; background: #ccfbf1 !important; border-color: #99f6e4 !important; }
+
+/* KPIs en fila limpia */
+:global(#cotizacion-pdf.pdf-mode .kpis) {
+  display: grid !important;
+  grid-template-columns: repeat(5, 1fr) !important;
+  gap: 10px !important;
+  margin-bottom: 24px !important;
+}
+:global(#cotizacion-pdf.pdf-mode .kpi-card) {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  padding: 10px 12px !important;
+  box-shadow: none !important;
+}
+:global(#cotizacion-pdf.pdf-mode .kpi-label) {
+  color: #64748b !important;
+  font-size: 0.65rem !important;
+  font-weight: 700 !important;
+}
+:global(#cotizacion-pdf.pdf-mode .kpi-val) {
+  color: #0f172a !important;
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+}
+:global(#cotizacion-pdf.pdf-mode .kpi-val.grand) {
+  color: #4f46e5 !important;
+}
+:global(#cotizacion-pdf.pdf-mode .kpi-val.cobrado) {
+  color: #0d9488 !important;
+}
+:global(#cotizacion-pdf.pdf-mode .kpi-val.pendiente) {
+  color: #d97706 !important;
+}
+
+/* Títulos de secciones */
+:global(#cotizacion-pdf.pdf-mode .section-title) {
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  color: #475569 !important;
+  border-bottom: 1px solid #cbd5e1 !important;
+  padding-bottom: 5px !important;
+  margin-bottom: 12px !important;
+}
+
+/* Tablas */
+:global(#cotizacion-pdf.pdf-mode .table-wrap) {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+  margin-bottom: 20px !important;
+}
+:global(#cotizacion-pdf.pdf-mode .detail-table thead tr) {
+  background: #f1f5f9 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+:global(#cotizacion-pdf.pdf-mode .detail-table th) {
+  color: #475569 !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  padding: 8px 12px !important;
+}
+:global(#cotizacion-pdf.pdf-mode .detail-table td) {
+  color: #334155 !important;
+  font-size: 0.82rem !important;
+  padding: 10px 12px !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+:global(#cotizacion-pdf.pdf-mode .detail-table tr:last-child td) {
+  border-bottom: none !important;
+}
+:global(#cotizacion-pdf.pdf-mode .mono) {
+  font-family: inherit !important;
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+}
+:global(#cotizacion-pdf.pdf-mode .num-cell) {
+  color: #64748b !important;
+}
+
+/* Resumen de pagos */
+:global(#cotizacion-pdf.pdf-mode .pagos-resumen) {
+  background: #f8fafc !important;
+  border-top: 1px solid #e2e8f0 !important;
+  border-radius: 0 0 8px 8px !important;
+  padding: 10px 14px !important;
+}
+:global(#cotizacion-pdf.pdf-mode .resumen-row) {
+  color: #334155 !important;
+}
+:global(#cotizacion-pdf.pdf-mode .resumen-label) {
+  color: #64748b !important;
+  font-weight: 500 !important;
+}
+:global(#cotizacion-pdf.pdf-mode .resumen-val) {
+  font-weight: 600 !important;
+}
+:global(#cotizacion-pdf.pdf-mode .resumen-row.grand) {
+  border-top: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+/* Notas y Términos */
+:global(#cotizacion-pdf.pdf-mode .info-grid) {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 16px !important;
+  margin-top: 20px !important;
+}
+:global(#cotizacion-pdf.pdf-mode .info-card) {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  padding: 14px 16px !important;
+  box-shadow: none !important;
+  page-break-inside: avoid !important;
+}
+:global(#cotizacion-pdf.pdf-mode .card-title) {
+  color: #475569 !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 6px !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  padding-bottom: 4px !important;
+}
+:global(#cotizacion-pdf.pdf-mode .prose) {
+  color: #334155 !important;
+  font-size: 0.82rem !important;
 }
 </style>
