@@ -35,7 +35,7 @@ export async function POST({ locals, url }) {
         persona_id: PAL_ID,
         conversation_name: "Cliente Evasivo",
         conversational_context: escenario.system_prompt,
-        callback_url: callbackUrl
+        callback_url: "https://gestorpyme.onrender.com/api/webhooks/tavus"
       })
     });
 
