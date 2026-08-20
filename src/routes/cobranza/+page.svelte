@@ -172,6 +172,15 @@
       return;
     }
 
+    // Solicitamos la finalización de Tavus en segundo plano sin esperar (no await)
+    fetch('/api/tavus/finalizar', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ conversation_id: currentConversationId })
+    }).catch(err => console.error('[Cobranza] Error al colgar llamada:', err));
+
     resetearTodo();
     
     flash = "¡Práctica finalizada! La IA está analizando tu desempeño en segundo plano. Podrás ver tus resultados en unos minutos.";
