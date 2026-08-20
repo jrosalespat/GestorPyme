@@ -2,7 +2,10 @@ import { prisma } from '$lib/server/prisma.js';
 import { fail } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageServerLoad} */
-export async function load() {
+export async function load({ locals }) {
+  const auth = typeof locals.auth === 'function' ? locals.auth() : null;
+  const userId = auth?.userId;
+
   // Traer cotizaciones en estados que pueden tener saldo pendiente
   const cotizaciones = await prisma.cotizacion.findMany({
     where: {
@@ -45,7 +48,23 @@ export async function load() {
 
   const totalCartera = cartera.reduce((acc, c) => acc + c.saldoPendiente, 0);
 
-  return { cartera, totalCartera };
+  let historialEvaluaciones = [];
+  if (userId) {
+    try {
+      historialEvaluaciones = await prisma.$queryRaw`
+        SELECT e.id, e.calificacion, e.feedback_ia, e.fecha_practica, c.titulo as escenario_titulo
+        FROM evaluaciones_cobranza e
+        JOIN escenarios_cobranza c ON e.escenario_id = c.id
+        WHERE e.usuario_id = ${userId}
+        ORDER BY e.fecha_practica DESC
+        LIMIT 5;
+      `;
+    } catch (dbError) {
+      console.error("Error al obtener historial de evaluaciones:", dbError);
+    }
+  }
+
+  return { cartera, totalCartera, historialEvaluaciones };
 }
 
 /** @type {import('./$types').Actions} */
