@@ -7,7 +7,7 @@ import { redirect } from '@sveltejs/kit';
  * /sign-in cubre también /sign-in/sso-callback y cualquier subruta
  * que Clerk necesite durante el handshake de OAuth.
  */
-const PUBLIC_ROUTES = ['/sign-in', '/sign-up'];
+const PUBLIC_ROUTES = ['/sign-in', '/sign-up', '/api/webhooks/tavus'];
 
 /**
  * Middleware 1: Clerk – autentica la request e inyecta event.locals.auth()

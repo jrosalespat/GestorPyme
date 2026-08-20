@@ -88,10 +88,18 @@ export async function POST(event) {
           }
 
           const tavusData = await tavusResponse.json();
-          const rawTranscript = tavusData.properties?.transcript || tavusData.transcript;
+          let rawTranscript = tavusData.properties?.transcript || tavusData.transcript;
+
+          if (!rawTranscript && Array.isArray(tavusData.events)) {
+            const transEvent = tavusData.events.find(
+              e => e.event_type === 'application.transcription_ready'
+            );
+            rawTranscript = transEvent?.properties?.transcript;
+          }
 
           if (Array.isArray(rawTranscript) && rawTranscript.length > 0) {
             transcriptText = rawTranscript
+              .filter(t => t.role === 'user' || t.role === 'assistant')
               .map(t => `${t.role === 'user' ? 'Cobrador' : 'Cliente'}: ${t.content}`)
               .join('\n');
           } else if (typeof rawTranscript === 'string' && rawTranscript.trim() !== '') {
@@ -155,7 +163,7 @@ ${transcriptText}
             'content-type': 'application/json'
           },
           body: JSON.stringify({
-            model: 'claude-3-5-sonnet-20241022',
+            model: 'claude-sonnet-5',
             max_tokens: 1024,
             system: systemPromptForClaude,
             messages: [

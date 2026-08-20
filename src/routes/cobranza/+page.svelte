@@ -381,7 +381,7 @@
         <p class="text-xs text-gray-500 mt-1">¡Anímate a entrenar con el Avatar Ang presionando el botón de arriba!</p>
       </div>
     {:else}
-      {#each historialEvaluaciones as ev (ev.id)}
+      {#each historialEvaluaciones.slice(0, 5) as ev (ev.id)}
         <div class="bg-[#12141c]/60 border border-white/5 hover:border-white/10 rounded-xl p-4 transition-all duration-200">
           <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
             <div>
