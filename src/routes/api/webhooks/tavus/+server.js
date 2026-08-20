@@ -11,21 +11,30 @@ export async function POST(event) {
     }
 
     const body = await event.request.json();
-    const conversationId = body.conversation_id;
-    const eventType = body.event_type || body.event || '';
+    console.log('[Webhook Tavus] Payload recibido de Tavus:', JSON.stringify(body, null, 2));
+
+    // 2. Extraer robustamente el conversation_id (en la raíz, data o event)
+    const conversationId = body.conversation_id || 
+                           body.data?.conversation_id || 
+                           body.event?.conversation_id || 
+                           body.properties?.conversation_id;
+
+    const eventType = body.event_type || body.event || 'desconocido';
 
     if (!conversationId) {
+      console.error('[Webhook Tavus] No se pudo extraer conversation_id del payload recibido.');
       return json({ error: 'Falta conversation_id en el cuerpo de la petición' }, { status: 400 });
     }
 
-    console.log(`[Webhook Tavus] Recibido evento: ${eventType} para conversation_id: ${conversationId}`);
+    console.log(`[Webhook Tavus] Evento identificado: "${eventType}" para la conversación: ${conversationId}`);
 
     // Definición de la lógica de procesamiento en segundo plano
     const processEvaluation = async () => {
       try {
-        console.log(`[Webhook Tavus] Iniciando evaluación en segundo plano para conversation_id: ${conversationId}...`);
+        console.log(`[Webhook Tavus] [Fondo] Iniciando flujo de evaluación para: ${conversationId}`);
 
         // A. Obtener el escenario_id asociado a la conversación desde la base de datos
+        console.log(`[Webhook Tavus] [Fondo] Buscando conversación ${conversationId} en la base de datos...`);
         const evaluations = await prisma.$queryRaw`
           SELECT escenario_id 
           FROM evaluaciones_cobranza 
@@ -34,13 +43,15 @@ export async function POST(event) {
         `;
 
         if (!evaluations || evaluations.length === 0) {
-          console.error(`[Webhook Tavus] No se encontró registro pendiente en evaluaciones_cobranza para: ${conversationId}`);
+          console.error(`[Webhook Tavus] [Fondo] [Error] No se encontró ningún registro pendiente en evaluaciones_cobranza para: ${conversationId}`);
           return;
         }
 
         const escenarioId = evaluations[0].escenario_id;
+        console.log(`[Webhook Tavus] [Fondo] Registro encontrado. Escenario ID: ${escenarioId}`);
 
         // B. Obtener el system_prompt original del escenario
+        console.log(`[Webhook Tavus] [Fondo] Recuperando system_prompt del escenario ${escenarioId}...`);
         const escenarios = await prisma.$queryRaw`
           SELECT system_prompt 
           FROM escenarios_cobranza 
@@ -49,13 +60,15 @@ export async function POST(event) {
         `;
 
         if (!escenarios || escenarios.length === 0) {
-          console.error(`[Webhook Tavus] No se encontró el escenario con id: ${escenarioId}`);
+          console.error(`[Webhook Tavus] [Fondo] [Error] No se encontró el escenario con ID: ${escenarioId}`);
           return;
         }
 
         const systemPrompt = escenarios[0].system_prompt;
+        console.log(`[Webhook Tavus] [Fondo] System prompt del escenario recuperado exitosamente.`);
 
         // C. Obtener la transcripción de Tavus (con reintentos)
+        console.log(`[Webhook Tavus] [Fondo] Solicitando transcripción a la API de Tavus...`);
         let transcriptText = '';
         let retries = 5;
         const delay = 3000;
@@ -70,7 +83,7 @@ export async function POST(event) {
 
           if (!tavusResponse.ok) {
             const errorText = await tavusResponse.text();
-            console.error('[Webhook Tavus] Error al obtener datos de Tavus:', errorText);
+            console.error('[Webhook Tavus] [Fondo] Error de API de Tavus:', errorText);
             break;
           }
 
@@ -89,17 +102,23 @@ export async function POST(event) {
             break;
           }
 
-          console.log(`[Webhook Tavus] Transcripción vacía. Reintentando en ${delay}ms... (Intentos restantes: ${retries - 1})`);
+          console.log(`[Webhook Tavus] [Fondo] Transcripción vacía. Reintentando en ${delay}ms... (Intentos restantes: ${retries - 1})`);
           await new Promise(resolve => setTimeout(resolve, delay));
           retries--;
         }
 
+        // 4. Validar transcripción
         if (!transcriptText || transcriptText.trim() === '') {
-          console.error(`[Webhook Tavus] No se pudo recuperar una transcripción válida para: ${conversationId}`);
+          console.warn(`[Webhook Tavus] [Fondo] [Advertencia] Transcripción vacía o indefinida para conversation_id: ${conversationId}. Se cancela la evaluación para no desperdiciar tokens de Claude.`);
           return;
         }
 
+        console.log(`[Webhook Tavus] [Fondo] Transcripción obtenida con éxito (${transcriptText.split('\n').length} líneas).`);
+
         // D. Evaluar la conversación con Claude
+        console.log(`[Webhook Tavus] [Fondo] Conectando con la API de Anthropic (Claude)...`);
+        
+        // 3. System prompt estricto indicando que retorne única y exclusivamente JSON
         const systemPromptForClaude = `Actúa como un gerente de cobranza experto y auditor de calidad corporativo. 
 Tu tarea es evaluar el desempeño de un agente de cobranza (el "Cobrador") durante una simulación interactiva con un cliente deudor ficticio.
 
@@ -112,7 +131,7 @@ Evalúa el desempeño del Cobrador considerando:
 - Claridad al comunicar la deuda y el folio.
 - Capacidad de negociación, firmeza y búsqueda de compromisos concretos de pago.
 
-Debes responder ÚNICA y ESTRICTAMENTE con un objeto JSON válido en español. No incluyas explicaciones adicionales, texto introductorio, ni bloques de código markdown alrededor del JSON. El JSON debe cumplir exactamente con esta estructura:
+Devuelve ÚNICA Y EXCLUSIVAMENTE un objeto JSON válido en español, sin texto adicional, sin saludos y sin formato markdown. El JSON debe cumplir exactamente con esta estructura:
 {
   "calificacion": <número entero del 1 al 100>,
   "feedback": "<comentarios detallados en español analizando aciertos, áreas de oportunidad y una recomendación práctica>"
@@ -146,39 +165,47 @@ ${transcriptText}
         });
 
         if (!anthropicResponse.ok) {
-          console.error('[Webhook Tavus] Error en API de Anthropic:', await anthropicResponse.text());
+          console.error('[Webhook Tavus] [Fondo] Error al comunicarse con Anthropic Claude:', await anthropicResponse.text());
           return;
         }
 
         const claudeResult = await anthropicResponse.json();
         const claudeText = claudeResult.content?.[0]?.text || '';
+        console.log('[Webhook Tavus] [Fondo] Respuesta cruda recibida de Claude:', claudeText);
         
-        let cleanJsonText = claudeText.trim();
-        if (cleanJsonText.startsWith('```')) {
-          cleanJsonText = cleanJsonText.replace(/^```(json)?/, '').replace(/```$/, '').trim();
-        }
+        // 3. Limpieza de JSON de Claude usando Expresión Regular
+        let cleanJsonText = claudeText.replace(/```json/g, '').replace(/```/g, '').trim();
+        console.log('[Webhook Tavus] [Fondo] Respuesta limpia para parseo:', cleanJsonText);
 
         let evaluationResult;
         try {
           evaluationResult = JSON.parse(cleanJsonText);
         } catch (parseError) {
-          console.error('[Webhook Tavus] Error al parsear JSON de Claude:', claudeText, parseError);
+          console.error('[Webhook Tavus] [Fondo] [Error] Fallo al parsear JSON de Claude:', cleanJsonText, parseError);
           return;
         }
 
         const { calificacion, feedback } = evaluationResult;
+        const califNum = parseInt(calificacion, 10);
 
-        // E. Guardar en base de datos
-        await prisma.$executeRaw`
+        if (isNaN(califNum)) {
+          console.error(`[Webhook Tavus] [Fondo] [Error] La calificación obtenida no es un entero válido: ${calificacion}`);
+          return;
+        }
+
+        // E. Guardar en base de datos buscando por conversation_id
+        console.log(`[Webhook Tavus] [Fondo] Guardando evaluación en Supabase. Calificación: ${califNum}...`);
+        const updatedRows = await prisma.$executeRaw`
           UPDATE evaluaciones_cobranza
-          SET calificacion = ${Number(calificacion)},
+          SET calificacion = ${califNum},
               feedback_ia = ${feedback}
           WHERE conversation_id = ${conversationId};
         `;
 
-        console.log(`[Webhook Tavus] Evaluación guardada exitosamente para la conversación: ${conversationId}`);
+        console.log(`[Webhook Tavus] [Fondo] Éxito. Filas actualizadas en DB: ${updatedRows} para la conversación: ${conversationId}`);
       } catch (bgError) {
-        console.error('[Webhook Tavus] Error crítico en el proceso de segundo plano:', bgError);
+        // 1. Error completo
+        console.error('[Webhook Tavus] [Fondo] [Error Crítico] Ocurrió un error completo en el proceso de fondo:', bgError);
       }
     };
 
@@ -193,7 +220,8 @@ ${transcriptText}
     return json({ success: true, message: 'Webhook recibido y procesándose en segundo plano' });
 
   } catch (error) {
-    console.error('[Webhook Tavus] Error general en endpoint POST:', error);
+    // 1. Error completo
+    console.error('[Webhook Tavus] [Error Crítico] Error completo en el controlador de entrada del webhook:', error);
     return json({ error: 'Error interno de servidor' }, { status: 500 });
   }
 }
